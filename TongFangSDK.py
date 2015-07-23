@@ -90,74 +90,15 @@ def TFSdk_SetToUseNewIP(new_ip=None, new_mask=None, new_gw=None, new_dns=None,
 	
 	
 	
-	
-search_units_search_id = -1
-search_units_searching = False
-search_units_counter = 0
-search_units_max_repeats = 3
-def callback_CameraFound(p_device_info, user_id):
-	global search_units_search_id, search_units_searching, search_units_counter, search_units_max_repeats
-	try:
-		device_info = p_device_info.contents
-		if found_cameras.has_key(device_info.serialNum):
-			search_units_counter += 1
-			if search_units_counter >= search_units_max_repeats:
-				search_units_searching = False
-				tfc_StopSearchUnits(search_units_search_id)
-		else:
-			search_units_counter = 0
-			print '\t', str(device_info.ip.ipV4)
-			found_cameras[device_info.serialNum] = {
-					'ip': str(device_info.ip.ipV4), 
-					'sn': str(device_info.serialNum), 
-					'mac': str(device_info.byMAC), 
-					'name': str(device_info.szDeviceName) 
-				}
-	except ValueError:
-		search_units_searching = False
-	return
-def TFSdk_SearchUnits():
-	found_cameras = dict()
-	global search_units_search_id, search_units_searching, search_units_counter
-	if search_units_searching:
-		return 'already searching'
-	try:
-		tfc_Init()
-		user_id = 0
-		for local_ip in tfc_GetLocalIP():
-			print '---', local_ip
-			search_units_search_id = tfc_StartSearchUnits(callback_CameraFound, user_id, local_ip=local_ip)
-			search_units_searching = True
-			print '--- search_id =', search_units_search_id
-			start_time = time.clock()
-			prev = ''
-			while search_units_searching and time.clock()-start_time < 3:
-				now = '%.1f' % (time.clock()-start_time)
-				if now != prev: prev = now; print now,
-				pass
-			print
-			if search_units_searching:
-				print '---stop =', tfc_StopSearchUnits(search_units_search_id)
-				search_units_searching = False
-			user_id += 1
-	except TFSdkError as err:
-		return str(err)
-	finally:
-		tfc_Cleanup()
-	return found_cameras
-	
-	
-
-class Empty: 
-	pass
 tfg_searching = False
-def TFSdk_SearchUnits2():
+def TFSdk_SearchUnits():
 	global tfg_searching
 	max_time_to_search = 2
 	is_show_interface_ip = False
 	is_show_time_marks = False
 	tfg_searching = False
 	found_cameras = dict()
+	
 	def fCameraFound(p_device_info, user_id):
 		global tfg_searching
 		is_show_cameras_found = False
@@ -192,19 +133,17 @@ def TFSdk_SearchUnits2():
 			tfg_searching = False
 			user_id += 1
 			tfc_Cleanup()
-			
 	except TFSdkError as err:
 		pass
 	return found_cameras
 
 if __name__ == '__main__':
-	# gc.set_debug(gc.DEBUG_STATS | gc.DEBUG_COLLECTABLE)
 	
 	# TFSdk_Init()
 	# print TFSdk_SetOSD('Если ваша сеть Ethernet', ip='172.20.23.67')
 	# print TFSdk_SetToUseDHCP('172.20.23.67')
 	# print TFSdk_SetToUseNewIP('172.20.23.67', ip='172.20.23.68')
 	# TFSdk_Cleanup()
-	for k, v in TFSdk_SearchUnits2().items():
+	for k, v in TFSdk_SearchUnits().items():
 		print v.device_type, v.name, v.ipaddr, v.macaddr, v.serial, v.version
 	print
