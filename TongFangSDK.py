@@ -153,14 +153,18 @@ class Empty:
 tfg_searching = False
 def TFSdk_SearchUnits2():
 	global tfg_searching
+	max_time_to_search = 2
+	is_show_interface_ip = False
+	is_show_time_marks = False
 	tfg_searching = False
 	found_cameras = dict()
 	def fCameraFound(p_device_info, user_id):
 		global tfg_searching
+		is_show_cameras_found = False
 		if tfg_searching and p_device_info:
 			device = p_device_info.contents
 			if not found_cameras.has_key(device.serial):
-				print '      camera', device.ipaddr
+				if is_show_cameras_found: print '      camera', device.ipaddr
 				found_cameras[device.serial] = copy.deepcopy(device)
 			else:
 				tfg_searching = False
@@ -175,14 +179,14 @@ def TFSdk_SearchUnits2():
 		user_id=0
 		for local_ip in local_ips:
 			tfc_Init()
-			print 'ip', local_ip
+			if is_show_interface_ip: print 'ip', local_ip
 			tfg_searching = True
 			search_id = tfc_StartSearchUnits(fCameraFoundCB, user_id, local_ip=local_ip)
 			start_time = time.clock()
 			prev = '   -.0'
-			while tfg_searching and time.clock()-start_time<9:
+			while tfg_searching and time.clock()-start_time<max_time_to_search:
 				current = '   %.1f' % (time.clock()-start_time)
-				if prev != current: print prev, tfg_searching; prev = current
+				if is_show_time_marks and prev != current: print prev, tfg_searching; prev = current
 				pass
 			tfc_StopSearchUnits(search_id)
 			tfg_searching = False
